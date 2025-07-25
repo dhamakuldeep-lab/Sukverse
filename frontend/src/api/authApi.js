@@ -88,3 +88,38 @@ export async function adminDeleteUser(id, accessToken) {
   });
   return handleResponse(res);
 }
+
+// -------------------- Bulk operations --------------------
+
+// Register multiple users then update their roles/status.
+// Each item in "users" should have: email, password, username,
+// role (admin|student) and optional status (active|inactive).
+export async function bulkRegisterUsers(users, accessToken) {
+  const results = [];
+  for (const user of users) {
+    // First create the user via the public register endpoint
+    const created = await registerUser({
+      email: user.email,
+      password: user.password,
+    });
+    // Immediately update fields that register does not cover
+    await adminUpdateUser(
+      created.id,
+      {
+        username: user.username || created.email.split('@')[0],
+        is_admin: user.role === 'admin',
+        is_active: user.status !== 'inactive',
+      },
+      accessToken
+    );
+    results.push(created);
+  }
+  return results;
+}
+
+// Delete many users at once
+export async function bulkDeleteUsers(ids, accessToken) {
+  for (const id of ids) {
+    await adminDeleteUser(id, accessToken);
+  }
+}
