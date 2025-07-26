@@ -16,6 +16,7 @@ import AdminPanel from "./pages/AdminPanel";
 import UserList from "./pages/UserList";
 import AddEditUserPage from "./pages/AddEditUserPage";
 import RoleManagementPage from "./pages/RoleManagementPage";
+import BulkUserUploadPage from "./pages/BulkUserUploadPage";
 
 // ✅ Workshop & Lessons
 import WorkshopDetailPage from "./pages/WorkshopDetailPage";
@@ -54,10 +55,11 @@ function App() {
           <Route path="/admin" element={<AdminPanel />} />
 
           {/* ✅ Admin User & Role Management */}
-          <Route path="/admin/users" element={<UserList />} />
-          <Route path="/admin/users/add" element={<AddEditUserPage />} />
-          <Route path="/admin/users/edit/:id" element={<AddEditUserPage />} />
-          <Route path="/admin/roles" element={<RoleManagementPage />} />
+  <Route path="/admin/users" element={<UserList />} />
+  <Route path="/admin/users/add" element={<AddEditUserPage />} />
+  <Route path="/admin/users/edit/:id" element={<AddEditUserPage />} />
+  <Route path="/admin/users/bulk-upload" element={<BulkUserUploadPage />} />
+  <Route path="/admin/roles" element={<RoleManagementPage />} />
 
           {/* ✅ Workshop Details & Lessons */}
           <Route path="/workshops/:id" element={<WorkshopDetailPage />} />
