@@ -9,9 +9,7 @@ from sqlalchemy import Column, Integer, String, Text, ForeignKey, Boolean, DateT
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship, declarative_base
 
-
 Base = declarative_base()
-
 
 class Workshop(Base):
     __tablename__ = "workshops"
@@ -33,35 +31,65 @@ class Section(Base):
     code = Column(Text, nullable=True)
 
     workshop = relationship("Workshop", back_populates="sections")
-    questions = relationship("QuizQuestion", back_populates="section", cascade="all, delete-orphan")
+    subsections = relationship("SubSection", back_populates="section", cascade="all, delete-orphan")
+
+
+class SubSection(Base):
+    __tablename__ = "subsections"
+    id = Column(Integer, primary_key=True, index=True)
+    section_id = Column(Integer, ForeignKey("sections.id"), nullable=False)
+    title = Column(String(200), nullable=False)
+    content_type = Column(String(50), default="content")  # content, quiz, ppt, code
+    content_url = Column(String(255), nullable=True)
+    order = Column(Integer)
+
+    section = relationship("Section", back_populates="subsections")
+    questions = relationship("QuizQuestion", back_populates="subsection", cascade="all, delete-orphan")
 
 
 class QuizQuestion(Base):
     __tablename__ = "quiz_questions"
     id = Column(Integer, primary_key=True, index=True)
-    section_id = Column(Integer, ForeignKey("sections.id"), nullable=False)
+    subsection_id = Column(Integer, ForeignKey("subsections.id"), nullable=False)
     question = Column(Text, nullable=False)
     options = Column(JSON, nullable=False)
     answer = Column(String(2), nullable=False)  # e.g., 'A'
     explanation = Column(Text, nullable=True)
 
-    section = relationship("Section", back_populates="questions")
+    subsection = relationship("SubSection", back_populates="questions")
 
 
-class StudentProgress(Base):
-    __tablename__ = "student_progress"
+class StudentSubProgress(Base):
+    __tablename__ = "student_sub_progress"
     id = Column(Integer, primary_key=True, index=True)
     student_id = Column(Integer, nullable=False)
-    section_id = Column(Integer, ForeignKey("sections.id"), nullable=False)
+    subsection_id = Column(Integer, ForeignKey("subsections.id"), nullable=False)
     completed = Column(Boolean, default=False)
     completed_at = Column(DateTime(timezone=False))
 
 
+class FinalQuizStatus(Base):
+    __tablename__ = "final_quiz_status"
+    id = Column(Integer, primary_key=True)
+    student_id = Column(Integer, nullable=False)
+    score = Column(Integer, nullable=True)
+    completed = Column(Boolean, default=False)
+    passed = Column(Boolean, default=False)
+    completed_at = Column(DateTime)
+    certificate_url = Column(String(255), nullable=True)
+
+
+class PlatformSurvey(Base):
+    __tablename__ = "platform_survey"
+    id = Column(Integer, primary_key=True)
+    student_id = Column(Integer, nullable=False)
+    interested_courses = Column(JSON, nullable=True)
+    email = Column(String(100))
+    whatsapp = Column(String(20))
+    feedback = Column(Text, nullable=True)
+    rating = Column(Integer)
+
+
 def init_db():
-    """
-    Create all tables in the database.  This function is imported in
-    ``main.py`` and called at application startup.  It imports the
-    database engine lazily to avoid circular imports.
-    """
     from .database import engine  # local import to avoid circular dependency
     Base.metadata.create_all(bind=engine)
