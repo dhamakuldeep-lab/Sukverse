@@ -58,7 +58,7 @@ function App() {
           <Route path="/admin/users" element={<UserList />} />
           <Route path="/admin/users/add" element={<AddEditUserPage />} />
           <Route path="/admin/users/edit/:id" element={<AddEditUserPage />} />
-          <Route path="/admin/users/bulk" element={<BulkUserUploadPage />} />
+          <Route path="/admin/users/bulk-upload" element={<BulkUserUploadPage />} />
           <Route path="/admin/roles" element={<RoleManagementPage />} />
 
           {/* ✅ Workshop Details & Lessons */}
