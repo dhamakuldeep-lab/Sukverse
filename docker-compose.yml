@@ -1,7 +1,5 @@
 version: '3.8'
-
 services:
-  # Auth service
   auth_service:
     build: ./auth_service
     container_name: auth_service
@@ -10,23 +8,61 @@ services:
     environment:
       - DATABASE_URL=postgresql+psycopg2://auth_user:auth_pass@auth_db:5432/auth_db
       - JWT_SECRET=supersecretjwtkey
-      - ADMIN_EMAIL=admin@example.com
-      - ADMIN_PASSWORD=admin123
     depends_on:
       - auth_db
 
-  # Workshop service
+  user_service:
+    build: ./user_service
+    container_name: user_service
+    ports:
+      - "8002:80"
+    environment:
+      - DATABASE_URL=postgresql+psycopg2://user_user:user_pass@user_db:5432/user_db
+    depends_on:
+      - user_db
+      - auth_service
+
   workshop_service:
     build: ./workshop_service
     container_name: workshop_service
     ports:
-      - "8002:80"
+      - "8003:80"
     environment:
       - DATABASE_URL=postgresql+psycopg2://work_user:work_pass@work_db:5432/work_db
     depends_on:
       - work_db
+      - auth_service
 
-  # Frontend (React)
+  quiz_service:
+    build: ./quiz_service
+    container_name: quiz_service
+    ports:
+      - "8004:80"
+    environment:
+      - DATABASE_URL=postgresql+psycopg2://quiz_user:quiz_pass@quiz_db:5432/quiz_db
+    depends_on:
+      - quiz_db
+
+  analytics_service:
+    build: ./analytics_service
+    container_name: analytics_service
+    ports:
+      - "8005:80"
+    environment:
+      - DATABASE_URL=postgresql+psycopg2://analytics_user:analytics_pass@analytics_db:5432/analytics_db
+    depends_on:
+      - analytics_db
+
+  certificate_service:
+    build: ./certificate_service
+    container_name: certificate_service
+    ports:
+      - "8006:80"
+    environment:
+      - DATABASE_URL=postgresql+psycopg2://cert_user:cert_pass@cert_db:5432/certificate_db
+    depends_on:
+      - cert_db
+
   frontend:
     build: ./frontend
     container_name: frontend
@@ -35,11 +71,12 @@ services:
     depends_on:
       - auth_service
       - workshop_service
+      - quiz_service
     environment:
       - AUTH_API=http://auth_service
       - WORKSHOP_API=http://workshop_service
+      - QUIZ_API=http://quiz_service
 
-  # PostgreSQL for auth
   auth_db:
     image: postgres:14
     restart: always
@@ -52,7 +89,18 @@ services:
     ports:
       - "5433:5432"
 
-  # PostgreSQL for workshop
+  user_db:
+    image: postgres:14
+    restart: always
+    environment:
+      POSTGRES_DB: user_db
+      POSTGRES_USER: user_user
+      POSTGRES_PASSWORD: user_pass
+    volumes:
+      - user_data:/var/lib/postgresql/data
+    ports:
+      - "5435:5432"
+
   work_db:
     image: postgres:14
     restart: always
@@ -65,6 +113,47 @@ services:
     ports:
       - "5434:5432"
 
+  quiz_db:
+    image: postgres:14
+    restart: always
+    environment:
+      POSTGRES_DB: quiz_db
+      POSTGRES_USER: quiz_user
+      POSTGRES_PASSWORD: quiz_pass
+    volumes:
+      - quiz_data:/var/lib/postgresql/data
+    ports:
+      - "5436:5432"
+
+  analytics_db:
+    image: postgres:14
+    restart: always
+    environment:
+      POSTGRES_DB: analytics_db
+      POSTGRES_USER: analytics_user
+      POSTGRES_PASSWORD: analytics_pass
+    volumes:
+      - analytics_data:/var/lib/postgresql/data
+    ports:
+      - "5437:5432"
+
+  cert_db:
+    image: postgres:14
+    restart: always
+    environment:
+      POSTGRES_DB: certificate_db
+      POSTGRES_USER: cert_user
+      POSTGRES_PASSWORD: cert_pass
+    volumes:
+      - cert_data:/var/lib/postgresql/data
+    ports:
+      - "5438:5432"
+
 volumes:
   auth_data:
+  user_data:
   work_data:
+  quiz_data:
+  analytics_data:
+  cert_data:
+
