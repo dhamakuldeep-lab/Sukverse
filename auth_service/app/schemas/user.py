@@ -68,3 +68,8 @@ class UserAdminUpdate(BaseModel):
     profile_picture_url: Optional[str] = None
     is_active: Optional[bool] = None
     is_admin: Optional[bool] = None
+
+
+class UserBulkUpdate(UserAdminUpdate):
+    """Payload for bulk updating multiple users."""
+    id: int

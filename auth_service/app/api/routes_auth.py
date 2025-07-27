@@ -16,7 +16,7 @@ from ..schemas import user as user_schema
 from ..services import auth as auth_service
 from ..db import models
 from ..security import jwt as jwt_utils
-from ..schemas.user import UserAdminUpdate, UserOut
+from ..schemas.user import UserAdminUpdate, UserOut, UserBulkUpdate
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
@@ -153,6 +153,20 @@ def get_user(user_id: int, current_user = Depends(get_current_user), db: Session
     if not user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     return user
+
+
+
+
+@router.put("/users/bulk-update", response_model=list[UserOut])
+def admin_bulk_update_users(updates: list[user_schema.UserBulkUpdate], current_user = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Update multiple users in one request. Admin only."""
+    if not current_user.is_admin:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin privileges required")
+    try:
+        updated = auth_service.bulk_update_users(db, updates)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+    return updated
 
 
 @router.put("/users/{user_id}", response_model=UserOut)

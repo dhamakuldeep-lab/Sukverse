@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  # Auth service
+  auth_service:
+    build: ./auth_service
+    container_name: auth_service
+    ports:
+      - "8001:80"
+    environment:
+      - DATABASE_URL=postgresql+psycopg2://auth_user:auth_pass@auth_db:5432/auth_db
+      - JWT_SECRET=supersecretjwtkey
+      - ADMIN_EMAIL=admin@example.com
+      - ADMIN_PASSWORD=admin123
+    depends_on:
+      - auth_db
+
+  # Workshop service
+  workshop_service:
+    build: ./workshop_service
+    container_name: workshop_service
+    ports:
+      - "8002:80"
+    environment:
+      - DATABASE_URL=postgresql+psycopg2://work_user:work_pass@work_db:5432/work_db
+    depends_on:
+      - work_db
+
+  # Frontend (React)
+  frontend:
+    build: ./frontend
+    container_name: frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - auth_service
+      - workshop_service
+    environment:
+      - AUTH_API=http://auth_service
+      - WORKSHOP_API=http://workshop_service
+
+  # PostgreSQL for auth
+  auth_db:
+    image: postgres:14
+    restart: always
+    environment:
+      POSTGRES_DB: auth_db
+      POSTGRES_USER: auth_user
+      POSTGRES_PASSWORD: auth_pass
+    volumes:
+      - auth_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+
+  # PostgreSQL for workshop
+  work_db:
+    image: postgres:14
+    restart: always
+    environment:
+      POSTGRES_DB: work_db
+      POSTGRES_USER: work_user
+      POSTGRES_PASSWORD: work_pass
+    volumes:
+      - work_data:/var/lib/postgresql/data
+    ports:
+      - "5434:5432"
+
+volumes:
+  auth_data:
+  work_data:

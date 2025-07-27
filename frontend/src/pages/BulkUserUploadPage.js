@@ -59,18 +59,27 @@ export default function BulkUserUploadPage() {
     setFile(null);
   };
 
+  const sidebarItems = [
+    { label: 'User List', path: '/admin/users' },
+    { label: 'Add User', path: '/admin/users/add' },
+    { label: 'Role Management', path: '/admin/roles' },
+    { label: 'Bulk Upload', path: '/admin/users/bulk-upload' },
+  ];
+
   return (
     <Box sx={{ display: 'flex' }}>
       <Navbar />
-      <Sidebar items={[
-        { label: 'User List', path: '/admin/users' },
-        { label: 'Add User', path: '/admin/users/add' },
-        { label: 'Role Management', path: '/admin/roles' },
-        { label: 'Bulk Upload', path: '/admin/users/bulk-upload' },
-      ]} />
+      <Sidebar items={sidebarItems} />
       <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
-        <Typography variant="h5" gutterBottom>Bulk User Upload</Typography>
-        <input type="file" accept=".csv" onChange={handleFileChange} data-testid="file-input" />
+        <Typography variant="h5" gutterBottom>
+          Bulk User Upload
+        </Typography>
+        <input
+          type="file"
+          accept=".csv"
+          onChange={handleFileChange}
+          data-testid="file-input"
+        />
         {rows.length > 0 && (
           <>
             <TableContainer component={Paper} sx={{ mt: 2 }}>
@@ -93,7 +102,9 @@ export default function BulkUserUploadPage() {
                 </TableBody>
               </Table>
             </TableContainer>
-            <Button variant="contained" sx={{ mt: 2 }} onClick={handleSubmit}>Submit</Button>
+            <Button variant="contained" sx={{ mt: 2 }} onClick={handleSubmit}>
+              Submit
+            </Button>
           </>
         )}
       </Box>
