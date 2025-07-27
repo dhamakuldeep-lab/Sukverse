@@ -13,7 +13,7 @@ import Typography from '@mui/material/Typography';
 import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
 import { UserContext } from '../contexts/UserContext';
-import { getUsers, adminDeleteUser } from '../api/authApi';
+import { getUsers, adminDeleteUser, bulkDeleteUsers } from '../api/authApi';
 
 // Displays a list of users in a table with Edit/Delete actions.  This
 // page is part of the admin module and includes the admin sidebar.
@@ -21,6 +21,7 @@ export default function UserList() {
   const navigate = useNavigate();
   const { currentUser } = useContext(UserContext);
   const [users, setUsers] = useState([]);
+  const [selected, setSelected] = useState([]);
 
   useEffect(() => {
     // Fetch all users if current user is admin
@@ -45,10 +46,41 @@ export default function UserList() {
     }
   };
 
+  const handleSelect = (id) => {
+    setSelected((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
+
+  const handleSelectAll = (e) => {
+    if (e.target.checked) {
+      setSelected(users.map((u) => u.id));
+    } else {
+      setSelected([]);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    try {
+      await bulkDeleteUsers(selected, localStorage.getItem('access_token'));
+      setUsers((prev) => prev.filter((u) => !selected.includes(u.id)));
+      setSelected([]);
+    } catch (err) {
+      console.error('Failed to delete users', err);
+    }
+  };
+
   return (
     <Box sx={{ display: 'flex' }}>
       <Navbar />
-      <Sidebar items={[{ label: 'User List', path: '/admin/users' }, { label: 'Add User', path: '/admin/users/add' }, { label: 'Role Management', path: '/admin/roles' }]} />
+      <Sidebar
+        items={[
+          { label: 'User List', path: '/admin/users' },
+          { label: 'Add User', path: '/admin/users/add' },
+          { label: 'Bulk Add', path: '/admin/users/bulk' },
+          { label: 'Role Management', path: '/admin/roles' },
+        ]}
+      />
       <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
         <Typography variant="h5" gutterBottom>User List</Typography>
         {/* Admin can add new users by registering; create button removed */}
@@ -59,6 +91,13 @@ export default function UserList() {
           <Table>
             <TableHead>
               <TableRow>
+                <TableCell padding="checkbox">
+                  <input
+                    type="checkbox"
+                    onChange={handleSelectAll}
+                    checked={selected.length === users.length && users.length > 0}
+                  />
+                </TableCell>
                 <TableCell>Name</TableCell>
                 <TableCell>Email</TableCell>
                 <TableCell>Role</TableCell>
@@ -69,6 +108,13 @@ export default function UserList() {
             <TableBody>
               {users.map((user) => (
                 <TableRow key={user.id}>
+                  <TableCell padding="checkbox">
+                    <input
+                      type="checkbox"
+                      checked={selected.includes(user.id)}
+                      onChange={() => handleSelect(user.id)}
+                    />
+                  </TableCell>
                   <TableCell>{user.username || '-'}</TableCell>
                   <TableCell>{user.email}</TableCell>
                   <TableCell>{user.is_admin ? 'Admin' : 'Student'}</TableCell>
@@ -86,6 +132,11 @@ export default function UserList() {
             </TableBody>
           </Table>
         </TableContainer>
+        {selected.length > 0 && (
+          <Button sx={{ mt: 2 }} color="error" variant="contained" onClick={handleBulkDelete}>
+            Delete Selected
+          </Button>
+        )}
       </Box>
     </Box>
   );

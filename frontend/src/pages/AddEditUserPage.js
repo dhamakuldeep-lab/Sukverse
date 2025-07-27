@@ -7,7 +7,7 @@ import MenuItem from '@mui/material/MenuItem';
 import Typography from '@mui/material/Typography';
 import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
-import { getUserById, adminUpdateUser } from '../api/authApi';
+import { getUserById, adminUpdateUser, registerUser } from '../api/authApi';
 
 // Page for adding or editing a user.  If an id param is present, the form
 // is prepopulated with that user's data.  Changes are not persisted
@@ -16,7 +16,7 @@ export default function AddEditUserPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const isEdit = Boolean(id);
-  const [formData, setFormData] = useState({ username: '', email: '', role: 'student', status: 'active' });
+  const [formData, setFormData] = useState({ username: '', email: '', password: '', role: 'student', status: 'active' });
 
   useEffect(() => {
     // Fetch user details if editing
@@ -27,6 +27,7 @@ export default function AddEditUserPage() {
           setFormData({
             username: user.username || '',
             email: user.email,
+            password: '',
             role: user.is_admin ? 'admin' : 'student',
             status: user.is_active ? 'active' : 'inactive',
           });
@@ -45,25 +46,50 @@ export default function AddEditUserPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // Build payload for admin update
-    const payload = {
-      email: formData.email,
-      username: formData.username,
-      is_admin: formData.role === 'admin',
-      is_active: formData.status === 'active',
-    };
+    const token = localStorage.getItem('access_token');
     try {
-      await adminUpdateUser(id, payload, localStorage.getItem('access_token'));
+      if (isEdit) {
+        // Update existing user
+        const payload = {
+          email: formData.email,
+          username: formData.username,
+          is_admin: formData.role === 'admin',
+          is_active: formData.status === 'active',
+        };
+        await adminUpdateUser(id, payload, token);
+      } else {
+        // Create user then apply additional fields
+        const created = await registerUser({
+          email: formData.email,
+          password: formData.password,
+        });
+        await adminUpdateUser(
+          created.id,
+          {
+            username: formData.username,
+            is_admin: formData.role === 'admin',
+            is_active: formData.status === 'active',
+          },
+          token
+        );
+      }
       navigate('/admin/users');
     } catch (err) {
-      console.error('Failed to update user', err);
+      console.error('Failed to save user', err);
     }
   };
 
   return (
     <Box sx={{ display: 'flex' }}>
       <Navbar />
-      <Sidebar items={[{ label: 'User List', path: '/admin/users' }, { label: 'Add User', path: '/admin/users/add' }, { label: 'Role Management', path: '/admin/roles' }]} />
+      <Sidebar
+        items={[
+          { label: 'User List', path: '/admin/users' },
+          { label: 'Add User', path: '/admin/users/add' },
+          { label: 'Bulk Add', path: '/admin/users/bulk' },
+          { label: 'Role Management', path: '/admin/roles' },
+        ]}
+      />
       <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
         <Typography variant="h5" gutterBottom>{isEdit ? 'Edit User' : 'Add User'}</Typography>
         <Box component="form" onSubmit={handleSubmit} sx={{ maxWidth: 400 }}>
@@ -86,6 +112,18 @@ export default function AddEditUserPage() {
             margin="normal"
             required
           />
+          {!isEdit && (
+            <TextField
+              label="Password"
+              name="password"
+              type="password"
+              value={formData.password}
+              onChange={handleChange}
+              fullWidth
+              margin="normal"
+              required
+            />
+          )}
           <TextField
             select
             label="Role"
