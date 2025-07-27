@@ -22,6 +22,15 @@ export default function UserList() {
   const { currentUser } = useContext(UserContext);
   const [users, setUsers] = useState([]);
 
+  if (!currentUser?.is_admin) {
+    return (
+      <Box sx={{ p: 2 }}>
+        <Typography variant="h6">Access Denied</Typography>
+        <Typography>You must be an admin to view this page.</Typography>
+      </Box>
+    );
+  }
+
   useEffect(() => {
     // Fetch all users if current user is admin
     const fetchUsers = async () => {
