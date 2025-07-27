@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
@@ -11,12 +11,23 @@ import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
 import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
+import { UserContext } from '../contexts/UserContext';
 
 // Page allowing admins to select a CSV file, preview its contents and
 // submit it for upload.  For now the Upload button does not send the
 // data anywhere.
 export default function BulkUserUploadPage() {
   const [rows, setRows] = useState([]);
+  const { currentUser } = useContext(UserContext);
+
+  if (!currentUser?.is_admin) {
+    return (
+      <Box sx={{ p: 2 }}>
+        <Typography variant="h6">Access Denied</Typography>
+        <Typography>You must be an admin to view this page.</Typography>
+      </Box>
+    );
+  }
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];

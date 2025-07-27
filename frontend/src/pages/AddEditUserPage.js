@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import TextField from '@mui/material/TextField';
@@ -7,6 +7,7 @@ import MenuItem from '@mui/material/MenuItem';
 import Typography from '@mui/material/Typography';
 import Navbar from '../components/Navbar';
 import Sidebar from '../components/Sidebar';
+import { UserContext } from '../contexts/UserContext';
 import { getUserById, adminUpdateUser } from '../api/authApi';
 
 // Page for adding or editing a user.  If an id param is present, the form
@@ -15,8 +16,18 @@ import { getUserById, adminUpdateUser } from '../api/authApi';
 export default function AddEditUserPage() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { currentUser } = useContext(UserContext);
   const isEdit = Boolean(id);
   const [formData, setFormData] = useState({ username: '', email: '', role: 'student', status: 'active' });
+
+  if (!currentUser?.is_admin) {
+    return (
+      <Box sx={{ p: 2 }}>
+        <Typography variant="h6">Access Denied</Typography>
+        <Typography>You must be an admin to view this page.</Typography>
+      </Box>
+    );
+  }
 
   useEffect(() => {
     // Fetch user details if editing
