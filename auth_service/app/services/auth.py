@@ -99,6 +99,33 @@ def admin_update_user(db: Session, user_id: int, update_data: user_schema.UserAd
     return user
 
 
+def bulk_update_users(db: Session, updates: list[user_schema.UserBulkUpdate]) -> list[models.User]:
+    """Update multiple users in a single operation."""
+    updated_records: list[models.User] = []
+    for item in updates:
+        user = db.query(models.User).filter(models.User.id == item.id).first()
+        if not user:
+            raise ValueError("User not found")
+        if item.email is not None:
+            existing = get_user_by_email(db, item.email)
+            if existing and existing.id != user.id:
+                raise ValueError("Email already in use")
+            user.email = item.email
+        if item.username is not None:
+            user.username = item.username
+        if item.profile_picture_url is not None:
+            user.profile_picture_url = item.profile_picture_url
+        if item.is_active is not None:
+            user.is_active = item.is_active
+        if item.is_admin is not None:
+            user.is_admin = item.is_admin
+        updated_records.append(user)
+    db.commit()
+    for user in updated_records:
+        db.refresh(user)
+    return updated_records
+
+
 def delete_user(db: Session, user_id: int) -> None:
     """Soft delete a user by marking them inactive. Does not remove from DB."""
     user = db.query(models.User).filter(models.User.id == user_id).first()
